@@ -41,7 +41,9 @@ public class AuthService {
                 resp.setMessage("User Saved Successfully");
                 resp.setStatusCode(200);
             }
+            LOGGER.error("User registration failed !!");
         }catch (Exception e){
+            LOGGER.error("User registration failed !!");
             resp.setStatusCode(500);
             resp.setError(e.getMessage());
         }
@@ -73,20 +75,23 @@ public class AuthService {
 
     public ReqRes refreshToken(ReqRes refreshTokenReqiest){
         ReqRes response = new ReqRes();
-        String ourEmail = jwtUtils.extractUsername(refreshTokenReqiest.getToken());
-        OurUsers users = ourUserRepo.findByEmail(ourEmail).orElseThrow();
-        if (jwtUtils.isTokenValid(refreshTokenReqiest.getToken(), users)) {
-            var jwt = jwtUtils.generateToken(users);
-            response.setStatusCode(200);
-            response.setToken(jwt);
-            response.setRefreshToken(refreshTokenReqiest.getToken());
-            response.setExpirationTime("24Hr");
-            LOGGER.info("Access token generated !!");
-            response.setMessage("Successfully Refreshed Token");
+        try{
+            String ourEmail = jwtUtils.extractUsername(refreshTokenReqiest.getToken());
+            OurUsers users = ourUserRepo.findByEmail(ourEmail).orElseThrow();
+            if (jwtUtils.isTokenValid(refreshTokenReqiest.getToken(), users)) {
+                var jwt = jwtUtils.generateToken(users);
+                response.setStatusCode(200);
+                response.setToken(jwt);
+                response.setRefreshToken(refreshTokenReqiest.getToken());
+                response.setExpirationTime("24Hr");
+                LOGGER.info("Access token generated !!");
+                response.setMessage("Successfully Refreshed Token");
+            }
+        }catch (Exception e){
+            LOGGER.error("Access token generation failed !!"+e.getMessage());
+            response.setStatusCode(500);
+            response.setMessage("Access token generation failed !! "+e.getMessage());
         }
-        response.setStatusCode(500);
-        response.setMessage("Access token generation failed !!");
-        LOGGER.error("Access token generation failed !!");
         return response;
     }
 }
