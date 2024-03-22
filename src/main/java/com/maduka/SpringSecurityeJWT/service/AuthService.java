@@ -1,10 +1,11 @@
 package com.maduka.SpringSecurityeJWT.service;
 
-
 import com.maduka.SpringSecurityeJWT.dto.ReqRes;
 import com.maduka.SpringSecurityeJWT.entity.OurUsers;
 import com.maduka.SpringSecurityeJWT.repository.OurUserRepo;
 import com.maduka.SpringSecurityeJWT.utils.JWTUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +25,8 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    private final Logger LOGGER = LoggerFactory.getLogger(AuthService.class);
 
     public ReqRes signUp(ReqRes registrationRequest){
         ReqRes resp = new ReqRes();
@@ -52,6 +55,7 @@ public class AuthService {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signinRequest.getEmail(),signinRequest.getPassword()));
             var user = ourUserRepo.findByEmail(signinRequest.getEmail()).orElseThrow();
             System.out.println("USER IS: "+ user);
+            LOGGER.info("Login success ++");
             var jwt = jwtUtils.generateToken(user);
             var refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), user);
             response.setStatusCode(200);
@@ -61,6 +65,7 @@ public class AuthService {
             response.setMessage("Successfully Signed In");
         }catch (Exception e){
             response.setStatusCode(500);
+            LOGGER.error("Login failed: "+ e.getMessage());
             response.setError(e.getMessage());
         }
         return response;
@@ -76,9 +81,12 @@ public class AuthService {
             response.setToken(jwt);
             response.setRefreshToken(refreshTokenReqiest.getToken());
             response.setExpirationTime("24Hr");
+            LOGGER.info("Access token generated !!");
             response.setMessage("Successfully Refreshed Token");
         }
         response.setStatusCode(500);
+        response.setMessage("Access token generation failed !!");
+        LOGGER.error("Access token generation failed !!");
         return response;
     }
 }
